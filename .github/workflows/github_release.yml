@@ -1,0 +1,87 @@
+name: Create github release
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
+
+jobs:   
+  github-release:
+    if: github.event.pull_request.merged == true
+    name: >-
+      Upload Python package to GitHub Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # IMPORTANT: mandatory for making GitHub Releases
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        ref: main
+        fetch-depth: 0  # Ensure all history and tags are fetched
+        ssh-key: ${{ secrets.SSH_KEY }}  # Required for pushing changes back to the repository
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11.10'  # Replace with the desired Python version if necessary
+
+    - name: Install Poetry
+      run: |
+        python -m pip install --upgrade pip
+        pip install poetry
+
+    - name: Build package with poetry
+      run: >-
+          poetry build
+    - name: Configure Git user
+      run: |
+        git config --local user.name "GitHub Action"
+        git config --local user.email "action@github.com"
+        git rev-parse --abbrev-ref HEAD
+    - name: Bump version, tag, and push changes
+      if: success()  # Only runs if the previous step succeeds
+      run: |
+        PR_BODY="${{ github.event.pull_request.body }}"
+        VERSION_TYPE=$(echo "$PR_BODY" | awk 'NR==1 {print $1}' | xargs)
+        echo "VERSION_TYPE: '$VERSION_TYPE'"
+        
+        # Extract the first word and clean it by removing newlines and trimming whitespace
+        VERSION_TYPE=$(echo "$PR_BODY" | awk 'NR==1 {print $1}' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+        echo "VERSION_TYPE: '$VERSION_TYPE'"
+        
+        # Check if VERSION_TYPE is valid
+        if [[ "$VERSION_TYPE" == "major" || "$VERSION_TYPE" == "minor" ]]; then
+            poetry version $VERSION_TYPE
+        else
+            poetry version patch
+        fi
+        
+        git add pyproject.toml
+        git commit -m "Bump version to $(poetry version -s)"
+        git tag v$(poetry version -s)
+        git push -f origin main
+        git push --tags
+        echo "TAG=v$(poetry version -s)" >> $GITHUB_ENV  
+
+    - name: Create GitHub Release
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      run: >-
+        gh release create
+        "$TAG"
+        --repo '${{ github.repository }}'
+        --notes '${{ github.event.pull_request.body }}'
+    - name: Upload artifact to GitHub Release
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+        TAG: ${{ env.TAG }}
+      # Upload to GitHub Release using the `gh` CLI.
+      # `dist/` contains the built packages
+      run: >-
+        gh release upload
+        "$TAG" dist/**
+        --repo '${{ github.repository }}'
