@@ -1,4 +1,5 @@
 
+import sys
 from urllib.parse import urlparse
 from document_analyzer.gcp.gcs_client import GCSClient
 from document_analyzer.ai.document_downloader import DocumentDownloader
