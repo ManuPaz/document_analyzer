@@ -14,7 +14,7 @@ def build_gcs_folder(url: str) -> str:
     parsed = urlparse(url)
     # Remove 'www.' and '.com' from netloc
     domain = parsed.netloc.replace('www.', '').replace('.com', '')
-    application = 'documents'
+    application = 'financial_documents'
     print(f"    domain  = {    domain }")
     return f"raw/{application}/{domain}"
 
