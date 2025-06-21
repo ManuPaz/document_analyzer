@@ -1,6 +1,6 @@
 import os
 import json
-from gcp.gcs_client import GCSClient
+from document_analyzer.gcp.gcs_client import GCSClient
 
 class DocumentAnalyzer:
     """
