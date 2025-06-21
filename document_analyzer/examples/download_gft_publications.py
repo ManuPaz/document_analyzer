@@ -1,8 +1,6 @@
-import sys
-import sys 
-sys.path.append("document_analyzer")
+
 from urllib.parse import urlparse
-from gcp.gcs_client import GCSClient
+from document_analyzer.gcp.gcs_client import GCSClient
 from document_analyzer.ai.document_downloader import DocumentDownloader
 
 def build_gcs_folder(url: str) -> str:

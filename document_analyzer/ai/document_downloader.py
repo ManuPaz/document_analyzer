@@ -5,7 +5,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from urllib.parse import urljoin, urlparse
 import os
 import requests
-from gcp.gcs_client import GCSClient
+from document_analyzer.gcp.gcs_client import GCSClient
 
 class DocumentDownloader:
     """
