@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "document_analyzer"
-version = "0.1.1"
+version = "0.1.2"
 description = "A comprehensive ML and LLM utility library"
 authors = ["manuel <manuelpazpintor@gmail.com>"]
 readme = "README.md"
