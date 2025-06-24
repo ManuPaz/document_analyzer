@@ -25,69 +25,173 @@ class DocumentDownloader:
     def get_document_links(self, url: str, a_class: str = None):
         """
         Uses Selenium to extract document links from a dynamically rendered web page.
-        Searches in <a>, <iframe>, and <embed> tags. Optionally, only <a> tags with a specific class.
-
-        Args:
-            url (str): The URL of the web page to analyze.
-            a_class (str, optional): If provided, only <a> tags with this class will be considered.
-
-        Returns:
-            list: A list of absolute URLs to document files.
+        Searches in <a>, <iframe>, and <embed> tags. Detects documents by:
+        - File extension in href
+        - type attribute (e.g., "application/pdf")
+        - class names containing document types
         """
         options = Options()
         options.add_argument("--headless")
         driver = webdriver.Chrome()
         driver.get(url)
 
-        exts = [".pdf", ".docx", ".doc", ".pptx", ".xlsx"]
-        doc_links = set()
+        # Document types to look for (both extensions and MIME types)
+        doc_extensions = [".pdf", ".docx", ".doc", ".pptx", ".xlsx"]
+        doc_types = ["pdf", "doc", "docx", "ppt", "pptx", "xls", "xlsx"]
+        doc_links = []  # Changed to list to store tuples (url, extension)
 
         # <a> tags
         if a_class:
             links = driver.find_elements(By.CSS_SELECTOR, f"a.{a_class}")
         else:
             links = driver.find_elements(By.TAG_NAME, "a")
+        
         for link in links:
             href = link.get_attribute("href")
-            if href and any(ext in href.lower() for ext in exts):
-                doc_links.add(urljoin(url, href))
+            if not href:
+                continue
+                
+            # Check by file extension
+            if any(ext in href.lower() for ext in doc_extensions):
+                doc_links.append((urljoin(url, href), None))
+                continue
+                
+            # Check by type attribute and determine extension if needed
+            link_type = link.get_attribute("type")
+            if link_type:
+                for doc_type in doc_types:
+                    if doc_type in link_type.lower():
+                        # Determine extension if not present
+                        extension = None
+                        if not any(ext in href.lower() for ext in doc_extensions):
+                            if doc_type == "pdf":
+                                extension = ".pdf"
+                            elif doc_type == "doc":
+                                extension = ".doc"
+                            elif doc_type == "docx":
+                                extension = ".docx"
+                            elif doc_type in ["ppt", "pptx"]:
+                                extension = ".pptx"
+                            elif doc_type in ["xls", "xlsx"]:
+                                extension = ".xlsx"
+                        doc_links.append((urljoin(url, href), extension))
+                        break
+                continue
+                
+            # Check by class attribute and determine extension if needed
+            link_class = link.get_attribute("class")
+            if link_class:
+                for doc_type in doc_types:
+                    if doc_type in link_class.lower():
+                        # Determine extension if not present
+                        extension = None
+                        if not any(ext in href.lower() for ext in doc_extensions):
+                            if doc_type == "pdf":
+                                extension = ".pdf"
+                            elif doc_type == "doc":
+                                extension = ".doc"
+                            elif doc_type == "docx":
+                                extension = ".docx"
+                            elif doc_type in ["ppt", "pptx"]:
+                                extension = ".pptx"
+                            elif doc_type in ["xls", "xlsx"]:
+                                extension = ".xlsx"
+                        doc_links.append((urljoin(url, href), extension))
+                        break
+                continue
 
-        # <iframe> tags
+        # <iframe> tags (similar logic)
         iframes = driver.find_elements(By.TAG_NAME, "iframe")
         for iframe in iframes:
             src = iframe.get_attribute("src")
-            if src and any(ext in src.lower() for ext in exts):
-                doc_links.add(urljoin(url, src))
+            if not src:
+                continue
+                
+            if any(ext in src.lower() for ext in doc_extensions):
+                doc_links.append((urljoin(url, src), None))
+                continue
+                
+            iframe_type = iframe.get_attribute("type")
+            if iframe_type:
+                for doc_type in doc_types:
+                    if doc_type in iframe_type.lower():
+                        extension = None
+                        if not any(ext in src.lower() for ext in doc_extensions):
+                            if doc_type == "pdf":
+                                extension = ".pdf"
+                            elif doc_type == "doc":
+                                extension = ".doc"
+                            elif doc_type == "docx":
+                                extension = ".docx"
+                            elif doc_type in ["ppt", "pptx"]:
+                                extension = ".pptx"
+                            elif doc_type in ["xls", "xlsx"]:
+                                extension = ".xlsx"
+                        doc_links.append((urljoin(url, src), extension))
+                        break
+                continue
 
-        # <embed> tags
+        # <embed> tags (similar logic)
         embeds = driver.find_elements(By.TAG_NAME, "embed")
         for embed in embeds:
             src = embed.get_attribute("src")
-            if src and any(ext in src.lower() for ext in exts):
-                doc_links.add(urljoin(url, src))
+            if not src:
+                continue
+                
+            if any(ext in src.lower() for ext in doc_extensions):
+                doc_links.append((urljoin(url, src), None))
+                continue
+                
+            embed_type = embed.get_attribute("type")
+            if embed_type:
+                for doc_type in doc_types:
+                    if doc_type in embed_type.lower():
+                        extension = None
+                        if not any(ext in src.lower() for ext in doc_extensions):
+                            if doc_type == "pdf":
+                                extension = ".pdf"
+                            elif doc_type == "doc":
+                                extension = ".doc"
+                            elif doc_type == "docx":
+                                extension = ".docx"
+                            elif doc_type in ["ppt", "pptx"]:
+                                extension = ".pptx"
+                            elif doc_type in ["xls", "xlsx"]:
+                                extension = ".xlsx"
+                        doc_links.append((urljoin(url, src), extension))
+                        break
+                continue
 
         driver.quit()
-        return list(doc_links)
+        return doc_links
 
-    def download_file(self, file_url: str, dest_folder: str = "downloads"):
+    def download_file(self, file_url: str, dest_folder: str = "downloads", extension: str = None):
         """
         Downloads a file from a URL to a local folder.
 
         Args:
             file_url (str): The URL of the file to download.
             dest_folder (str): The local folder to save the file.
+            extension (str, optional): Extension to add to the filename if not present.
 
         Returns:
             str: The local file path.
         """
         os.makedirs(dest_folder, exist_ok=True)
-        local_filename = os.path.join(dest_folder, os.path.basename(urlparse(file_url).path))
+        local_filename = os.path.basename(urlparse(file_url).path)
+        
+        # Add extension if provided and not already present
+        if extension and not any(local_filename.lower().endswith(ext) for ext in [".pdf", ".docx", ".doc", ".pptx", ".xlsx"]):
+            local_filename += extension
+            
+        local_path = os.path.join(dest_folder, local_filename)
+        
         with requests.get(file_url, stream=True) as r:
             r.raise_for_status()
-            with open(local_filename, "wb") as f:
+            with open(local_path, "wb") as f:
                 for chunk in r.iter_content(chunk_size=8192):
                     f.write(chunk)
-        return local_filename
+        return local_path
 
     def process_url(self, url: str, gcs_folder: str = "", a_class: str = None):
         """
@@ -100,12 +204,15 @@ class DocumentDownloader:
         """
         doc_links = self.get_document_links(url, a_class=a_class)
         print(f"Found {len(doc_links)} document(s) at {url}")
-        for doc_url in doc_links:
-            print(f"Downloading {doc_url} ...")
-            local_path = self.download_file(doc_url)
-            destination_blob = os.path.join(gcs_folder, os.path.basename(local_path)) if gcs_folder else os.path.basename(local_path)
-            destination_blob=  destination_blob.replace("\\","/")
-            print(f"Uploading {local_path} to GCS as {destination_blob} ...")
-            self.gcs_client.upload_blob(local_path, destination_blob)
-            os.remove(local_path)
+        for doc_url, extension in doc_links:
+            try:
+                print(f"Downloading {doc_url} ...")
+                local_path = self.download_file(doc_url, extension=extension)
+                destination_blob = os.path.join(gcs_folder, os.path.basename(local_path)) if gcs_folder else os.path.basename(local_path)
+                destination_blob=  destination_blob.replace("\\","/")
+                print(f"Uploading {local_path} to GCS as {destination_blob} ...")
+                self.gcs_client.upload_blob(local_path, destination_blob)
+                os.remove(local_path)
+            except Exception as e:
+                print(e)
         print("All documents processed and uploaded.") 

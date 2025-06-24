@@ -2,7 +2,7 @@ import os
 import json
 from document_analyzer.gcp.gcs_client import GCSClient
 
-class DocumentAnalyzer:
+class DocumentProcessor:
     """
     Analyzes documents stored in a GCS bucket.
     """

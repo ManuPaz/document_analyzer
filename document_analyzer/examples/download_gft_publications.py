@@ -23,7 +23,7 @@ def main():
     and uploads them to a Google Cloud Storage bucket, using a GCS folder path built from the URL.
     """
     # Read URL from command-line arguments, or use default
-    default_url = "https://www.gft.com/int/en/about-us/investor-relations/publications-and-news"
+    default_url = "https://www.millerind.com/investors/quarterly-reports"
     url = sys.argv[1] if len(sys.argv) > 1 else default_url
     gcs_folder = build_gcs_folder(url)
     print(f"Using URL: {url}")
