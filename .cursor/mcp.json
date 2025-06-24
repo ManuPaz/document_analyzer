@@ -1,0 +1,11 @@
+{
+    "mcpServers": {
+      "bigquery": {
+        "command": "C:\\Users\\manue\\OneDrive\\Documentos\\toolbox.exe",
+        "args": ["--prebuilt","bigquery","--stdio"],
+        "env": {
+          "BIGQUERY_PROJECT": "ninth-park-406619"
+        }
+      }
+    }
+  }
