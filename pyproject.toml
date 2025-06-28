@@ -30,6 +30,8 @@ webdriver-manager = "4.0.2"
 selenium = "4.33.0"
 langchain-community = "0.3.25"
 pypdf = "5.6.0"
+mcp = {extras = ["cli"], version = "^1.9.4"}
+typer = "^0.16.0"
 [tool.poetry.group.dev.dependencies]
 pytest = ">=7.4.0"
 pytest-cov = "^4.1.0"

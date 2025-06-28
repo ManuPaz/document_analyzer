@@ -1,9 +1,7 @@
 import os
+import argparse
 from document_analyzer.gcp.gcs_client import GCSClient
 from document_analyzer.ai.document_processor import DocumentProcessor
-
-# Set the GCS folder to analyze
-GCS_FOLDER = "raw/financial_documents/millerind"
 
 def process_file(processor, gcs_file_path):
     """Downloads, analyzes, and uploads batches for a single file."""
@@ -19,11 +17,22 @@ def process_file(processor, gcs_file_path):
         print(f"Failed to process {gcs_file_path}. Error: {e}")
 
 if __name__ == "__main__":
-    gcs = GCSClient()
+    # Configurar argumentos de línea de comandos
+    parser = argparse.ArgumentParser(description='Procesar documentos desde GCS')
+    parser.add_argument('--folder', type=str, default="raw/financial_documents/investors.unidata.it",
+                       help='Folder de GCS a procesar (default: raw/financial_documents/investors.unidata.it)')
+    parser.add_argument('--bucket', type=str, default=None,
+                       help='Nombre del bucket de GCS a usar (si no se especifica, usa el bucket por defecto)')
+    args = parser.parse_args()
+    
+    gcs = GCSClient(bucket_name=args.bucket)
     processor = DocumentProcessor(gcs)
+    
+    print(f"🔧 Usando bucket: {gcs.get_bucket_name()}")
+    print(f"📁 Procesando folder: {args.folder}")
 
     # List documents in the folder
-    files = processor.list_documents(GCS_FOLDER)
+    files = processor.list_documents(args.folder)
     print("Files in GCS folder:")
     for idx, f in enumerate(files):
         print(f"[{idx}] {f}")

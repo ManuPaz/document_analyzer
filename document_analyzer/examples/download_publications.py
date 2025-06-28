@@ -1,5 +1,5 @@
-
 import sys
+import argparse
 from urllib.parse import urlparse
 from document_analyzer.gcp.gcs_client import GCSClient
 from document_analyzer.ai.document_downloader import DocumentDownloader
@@ -22,14 +22,22 @@ def main():
     Downloads all document files from the given URL (or default GFT Publications and News page)
     and uploads them to a Google Cloud Storage bucket, using a GCS folder path built from the URL.
     """
-    # Read URL from command-line arguments, or use default
-    default_url = "https://www.millerind.com/investors/quarterly-reports"
-    url = sys.argv[1] if len(sys.argv) > 1 else default_url
+    # Configurar argumentos de línea de comandos
+    parser = argparse.ArgumentParser(description='Descargar publicaciones desde una URL')
+    parser.add_argument('--url', type=str, default="https://investors.unidata.it/investors/presentations/?lang=en",
+                       help='URL de la página a procesar (default: https://investors.unidata.it/investors/presentations/?lang=en)')
+    parser.add_argument('--bucket', type=str, default=None,
+                       help='Nombre del bucket de GCS a usar (si no se especifica, usa el bucket por defecto)')
+    args = parser.parse_args()
+    
+    url = args.url
     gcs_folder = build_gcs_folder(url)
-    print(f"Using URL: {url}")
-    print(f"GCS folder: {gcs_folder}")
+    print(f"🔧 Usando bucket: {GCSClient(bucket_name=args.bucket).get_bucket_name()}")
+    print(f"🌐 Usando URL: {url}")
+    print(f"📁 GCS folder: {gcs_folder}")
+    
     # Initialize the GCS client
-    gcs = GCSClient()
+    gcs = GCSClient(bucket_name=args.bucket)
     # Initialize the document downloader with the GCS client
     downloader = DocumentDownloader(gcs)
     # Start the process
